@@ -8,8 +8,12 @@ import (
 )
 
 type Avenger struct {
-	Character string `json:"character"`
+	Character string `json:"hero"`
 	Name      string `json:"name"`
+	Link      string `json:"link"`
+	Img       string `json:"img"`
+	Size      int    `json:"size"`
+
 }
 
 var avengers []Avenger
