@@ -1,0 +1,36 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.10
+    
+    working_directory: /go/src/github.com/mlabouardy/docker-eb-ci-mon
+
+    steps:
+      - checkout
+
+      - setup_remote_docker
+
+      - run:
+         name: Install AWS CLI
+         command: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      - run:
+          name: Test
+          command: go test
+      
+      - run:
+          name: Build
+          command: docker build -t aesthet/avengers:latest .
+      
+      - run:
+          name: Deploy
+          command: |
+            zip -r deployment-${CIRCLE_SHA1}.zip .
+            aws s3 cp deployment-${CIRCLE_SHA1}.zip s3://avengers-docker-eb --region eu-west-3
+            aws elasticbeanstalk create-application-version --application-name avengers \
+                --version-label ${CIRCLE_SHA1} --source-bundle S3Bucket="elasticbeanstalk-eu-central-1-418451374107",S3Key="deployment-${CIRCLE_SHA1}.zip" --region eu-central-1
+            aws elasticbeanstalk update-environment --application-name avengers \
+                --environment-name staging --version-label ${CIRCLE_SHA1} --region eu-central-1
